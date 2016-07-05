@@ -14,16 +14,107 @@ let helpers = require('./helpers');
 */
 
 class App extends React.Component{
+constructor(){
+  super();
+  this.state = {
+      fishes: {},
+      order: {},
+  };
+}
 
+addToOrder = (key)=>{
+ this.state.order[key] = this.state.order[key] + 1 || 1;
+ this.setState({order:this.state.order});
+}
+
+addFish = (fish)=>{
+  let timeStamp = (new Date()).getTime();
+  //Update the state
+  this.state.fishes['fish-' + timeStamp] = fish;
+  //Set the state
+  this.setState({fishes: this.state.fishes});
+}
+
+loadSamples = ()=>{
+  this.setState({fishes:require('./sample-fishes')});
+}
+
+renderFish = (key) =>{
+  return <Fish key={key} index={key} details={this.state.fishes[key]} addToOrder={this.addToOrder}/>
+}
   render(){
     return(
       <div className= "catch-of-the-day">
         <div className="menu">
           <Header tagline="Fresh Seafood Good"/>
+          <ul className="listOfFishes">
+            {Object.keys(this.state.fishes).map(this.renderFish)}
+          </ul>
         </div>
         <Order />
-        <Inventory />
+        <Inventory addFish={this.addFish} loadSamples={this.loadSamples}/>
       </div>
+    )
+  }
+}
+
+/*
+  Fish Component
+*/
+
+class Fish extends React.Component{
+  onButtonClick = ()=>{
+    console.log("Going to add the fish:", this.props.index);
+    this.props.addToOrder(this.props.index);
+  }
+  render(){
+    let details = this.props.details;
+    let isAvailable = (details.status === 'available' ? true : false);
+    let buttonText = (isAvailable ? 'Add to Order' : 'Sold out!');
+    return(
+      <li className="menu-fish">
+        <img src={details.image} alt ={details.name}/>
+        <h3 className="fish-name">
+          {details.name}
+          <span className="price">{helpers.formatPrice(details.price)}</span>
+        </h3>
+        <p>{details.desc}</p>
+        <button disabled={!isAvailable} onClick={this.onButtonClick}>{buttonText}</button>
+      </li>
+    )
+  }
+}
+
+/*
+  Add Fish form
+*/
+
+class AddFishForm extends React.Component{
+  createFish = (event)=>{
+    event.preventDefault()
+    let fish = {
+      name: this.refs.name.value,
+      price: this.refs.price.value,
+      status: this.refs.status.value,
+      desc: this.refs.desc.value,
+      image:  this.refs.image.value,
+    }
+    this.props.addFish(fish);
+    this.refs.fishform.reset()
+  }
+  render(){
+    return (
+      <form className="fish-edit" ref="fishform" onSubmit={this.createFish}>
+        <input type="text" ref="name" placeholder="Fish Name"/>
+        <input type="text" ref="price" placeholder="Fish Price"/>
+        <select ref="status">
+          <option value="available">Fresh!</option>
+          <option value="soldOut">Sold out</option>
+        </select>
+        <textarea type="text" ref="desc" placeholder="Desc"/>
+        <input type="text" ref="image" placeholder="URL to image"/>
+        <button type="submit">+ Add Item</button>
+      </form>
     )
   }
 }
@@ -68,7 +159,11 @@ class Order extends React.Component{
 class Inventory extends React.Component{
   render(){
     return(
-      <p>Inventory</p>
+      <div>
+        <h2>Inventory</h2>
+        <AddFishForm {...this.props}/>
+        <button onClick={this.props.loadSamples}> Load Sample Fishes</button>
+      </div>
     )
   }
 }
