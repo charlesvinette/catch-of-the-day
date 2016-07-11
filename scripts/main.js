@@ -12,6 +12,8 @@ let helpers = require('./helpers');
 //Firebase
 let Rebase = require('re-base');
 let base = Rebase.createClass('https://catch-of-the-day-78c5f.firebaseio.com/');
+//React Catalyst
+let Catalyst = require('react-catalyst');
 
 /*
   App
@@ -70,7 +72,7 @@ renderFish = (key) =>{
           </ul>
         </div>
         <Order fishes={this.state.fishes} order={this.state.order}/>
-        <Inventory addFish={this.addFish} loadSamples={this.loadSamples}/>
+        <Inventory addFish={this.addFish} loadSamples={this.loadSamples} fishes={this.state.fishes} setState={this.setState}/>
       </div>
     )
   }
@@ -209,10 +211,23 @@ class Order extends React.Component{
 */
 
 class Inventory extends React.Component{
+  handleModification = (key, value)=>{
+    this.props.fishes[key].name = value
+    this.props.setState({fishes: this.props.fishes})
+    console.log(this.props.fishes[key]);
+  }
+  renderInventory = (key)=>{
+    return(
+      <div className="fish-edit" key={key}>
+        <input type="text" value={this.props.fishes[key].name} onChange={(event)=>this.handleModification(key, event.target.value)}/>
+      </div>
+    )
+  }
   render(){
     return(
       <div>
         <h2>Inventory</h2>
+        {Object.keys(this.props.fishes).map(this.renderInventory)}
         <AddFishForm {...this.props}/>
         <button onClick={this.props.loadSamples}> Load Sample Fishes</button>
       </div>
